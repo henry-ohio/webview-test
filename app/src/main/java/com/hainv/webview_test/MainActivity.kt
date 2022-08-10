@@ -8,6 +8,9 @@ import android.util.Log
 import android.webkit.*
 import androidx.appcompat.app.AppCompatActivity
 import com.hainv.webview_test.databinding.ActivityMainBinding
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.HashMap
 
 
 class MainActivity : AppCompatActivity() {
@@ -89,7 +92,36 @@ class MainActivity : AppCompatActivity() {
 
 // SSL Error Tolerant Web View Client
 private class SSLTolerentWebViewClient : WebViewClient() {
+    val formatter = SimpleDateFormat("E, dd MMM yyyy kk:mm:ss", Locale.US)
+
     override fun onReceivedSslError(view: WebView, handler: SslErrorHandler, error: SslError) {
         handler.proceed() // Ignore SSL certificate errors
+    }
+
+    override fun shouldInterceptRequest(
+        view: WebView?,
+        request: WebResourceRequest?
+    ): WebResourceResponse? {
+        request?.requestHeaders?.put("Access-Control-Allow-Origin", "*")
+        return super.shouldInterceptRequest(view, request)
+    }
+
+    fun buildResponse(): WebResourceResponse {
+        val date = Date()
+        val dateString = formatter.format(date)
+
+        val headers = HashMap<String, String>()
+
+        headers["Connection"] = "close"
+        headers["Content-Type"] = "text/plain"
+        headers["Date"] = "$dateString GMT"
+        headers.put("Access-Control-Allow-Origin", "*")
+        headers["Access-Control-Allow-Methods"] = "GET, POST, DELETE, PUT, OPTIONS"
+        headers["Access-Control-Max-Age"] = "600"
+        headers["Access-Control-Allow-Credentials"] = "true"
+        headers["Access-Control-Allow-Headers"] = "accept, authorization, Content-Type"
+        headers["Via"] = "1.1 vegur"
+
+        return WebResourceResponse("text/plain", "UTF-8", 200, "OK", headers, null)
     }
 }
